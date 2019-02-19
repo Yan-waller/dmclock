@@ -1227,6 +1227,7 @@ namespace crimson {
 
 	Counter erased_num = 0;
 	if (erase_point > 0 || idle_point > 0) {
+          auto start = std::chrono::steady_clock::now();
 	  for (auto i = client_map.begin(); i != client_map.end(); /* empty */) {
 	    auto i2 = i++;
 	    if (erase_point &&
@@ -1239,6 +1240,11 @@ namespace crimson {
 	      i2->second->idle = true;
 	    }
 	  } // for
+          auto end = std::chrono::steady_clock::now();
+          std::chrono::duration<double> diff = end - start;
+          std::cout << "### delete_from_heaps consume time: " << diff.count()
+                    << "s, erased: " << erased_num << ", client_map: "
+                    << client_map.size() << std::endl;
 
 	  auto wperiod = check_time;
 	  if (erased_num >= erase_max) {

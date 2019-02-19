@@ -184,6 +184,43 @@ namespace crimson {
 	});
     } // TEST
 
+    TEST(dmclock_server, client_idle_erase_bunch) {
+      using ClientId = int;
+      using Queue = dmc::PushPriorityQueue<ClientId,Request>;
+      ClientId client = 17;
+      double reservation = 100.0;
+
+      dmc::ClientInfo ci(reservation, 1.0, 0.0);
+      auto client_info_f = [&] (ClientId c) -> const dmc::ClientInfo* {
+       return &ci;
+      };
+      auto server_ready_f = [] () -> bool { return true; };
+      auto submit_req_f = [] (const ClientId& c,
+                             std::unique_ptr<Request> req,
+                             dmc::PhaseType phase,
+                             uint64_t req_cost) {
+       // empty; do nothing
+      };
+
+      Queue pq(client_info_f,
+              server_ready_f,
+              submit_req_f,
+              std::chrono::seconds(11),
+              std::chrono::seconds(15),
+              std::chrono::seconds(10),
+              AtLimit::Wait);
+
+
+      Request req;
+      dmc::ReqParams req_params(1, 1);
+      for (client = 0; client < 75000; client++) {
+        if ((client+1) % 1000 == 0)
+          std::this_thread::sleep_for(std::chrono::seconds(1));
+        EXPECT_EQ(0, pq.add_request_time(req, client, req_params, dmc::get_time()));
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(200));
+
+    } // TEST
 
     TEST(dmclock_server, delayed_tag_calc) {
       using ClientId = int;
